@@ -4,12 +4,39 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+        cache: maven
+    - name: Build with Maven
+      run: ./mvnw package -Pnative -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11
+    - name: Alibaba Cloud Container Registry (ACR) Login
+      # https://mincong.io/cn/github-actions-acr/
+      # You may pin to the exact commit or the version.
+      # uses: aliyun/acr-login@8f767fdbf27e81327587352ff253c682b8d70f6d
+      uses: aliyun/acr-login@v1
+      with:
+        # Container registry username
+        username: "${{ secrets.ACR_USERNAME }}"
+        # Container registry password
+        password: "${{ secrets.ACR_PASSWORD }}"
+        # Region id
+        region-id: cn-hangzhou
+        # Container registry server url
+        login-server: https://registry.cn-hangzhou.aliyuncs.com
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: |
+        docker version
+        # 使用 Dockerfile 构建镜像
+        docker build -f src/main/docker/Dockerfile.native-micro -t registry.cn-hangzhou.aliyuncs.com/sunrise2021/awt-graphics-rest-micro .
+        # 推送镜像到镜像仓库
+        docker push registry.cn-hangzhou.aliyuncs.com/sunrise2021/awt-graphics-rest-micro
+#
