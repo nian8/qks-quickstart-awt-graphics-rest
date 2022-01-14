@@ -42,6 +42,7 @@ public class ImageResource {
         return Response
                 .accepted()
                 .type(MediaType.APPLICATION_OCTET_STREAM_TYPE)
+                .header("Content-Disposition", "attachment; filename=result.png")
                 .entity(bos.toByteArray())
                 .build();
     }
